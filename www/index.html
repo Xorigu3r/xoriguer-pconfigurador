@@ -35,6 +35,14 @@
     </section>
 
     <section class="targeta">
+      <h2>Com el vols muntar?</h2>
+      <div class="perfils modes" role="radiogroup">
+        <button class="perfil mode" role="radio" data-mode="auto"><span class="ico">⚡</span><b>Automàtic</b><small>Tu poses el pressupost i el programa tria les peces</small></button>
+        <button class="perfil mode" role="radio" data-mode="ma"><span class="ico">🛠️</span><b>Tria tu les peces</b><small>Tries cada peça i només et surten les que hi van bé</small></button>
+      </div>
+    </section>
+
+    <section class="targeta">
       <h2>Pressupost</h2>
       <div class="pressupost">
         <input id="rang" type="range" min="300" max="5000" step="50" value="1200" aria-label="Pressupost">
@@ -71,6 +79,8 @@
         <ul id="r-avisos" class="missatges"></ul>
         <div class="accions">
           <button id="copia">📋 Copia la llista</button>
+          <button id="ama">🛠️ Ajusta'l a mà</button>
+          <button id="buida" class="discret">✕ Buida-ho tot</button>
           <button id="refa" class="discret">↺ Torna a muntar</button>
         </div>
       </div>
@@ -86,6 +96,10 @@
 
   <dialog id="dlg-alt" class="dialeg">
     <div class="dlg-cap"><h2 id="alt-titol"></h2><button class="discret" data-tanca>✕</button></div>
+    <div id="alt-filtre" class="alt-filtre" hidden>
+      <span id="alt-compta" class="petit suau"></span>
+      <label class="petit"><input id="alt-totes" type="checkbox"> <span>Mostra també les que no hi van</span></label>
+    </div>
     <ul id="alt-llista" class="alternatives"></ul>
   </dialog>
 

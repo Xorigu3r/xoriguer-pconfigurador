@@ -126,7 +126,15 @@
     { id: 'case-forge120a', nom: 'MSI MAG FORGE 120A AIRFLOW', q: 'MSI MAG FORGE 120A AIRFLOW', m: ['forge 120a'], x: [], forms: ['ATX', 'mATX', 'ITX'], gpuMax: 330, cooler: 160, rad: 240, qual: 1, preu: 76 },
     { id: 'case-pb501', nom: 'be quiet! Pure Base 501 Airflow', q: 'be quiet Pure Base 501 Airflow', m: ['pure base 501'], x: [], forms: ['ATX', 'mATX', 'ITX'], gpuMax: 369, cooler: 190, rad: 360, qual: 2, preu: 67 },
     { id: 'case-lancool216', nom: 'Lian Li LANCOOL 216', q: 'Lian Li LANCOOL 216', m: ['lancool 216'], x: [], forms: ['ATX', 'mATX', 'ITX'], gpuMax: 392, cooler: 180, rad: 360, qual: 3, preu: 113 },
-    { id: 'case-north', nom: 'Fractal Design North', q: 'Fractal Design North', m: ['fractal', 'north'], x: ['xl'], forms: ['ATX', 'mATX', 'ITX'], gpuMax: 355, cooler: 170, rad: 360, qual: 3, preu: 138 },
+    { id: 'case-3000d', nom: 'Corsair 3000D Airflow', q: 'Corsair 3000D Airflow', m: ['3000d', 'airflow'], x: [], forms: ['ATX', 'mATX', 'ITX'], gpuMax: 360, cooler: 170, rad: 360, qual: 2, preu: 92 },
+    { id: 'case-xtpro', nom: 'Phanteks XT Pro', q: 'Phanteks XT Pro', m: ['xt pro'], x: [], forms: ['ATX', 'mATX', 'ITX'], gpuMax: 400, cooler: 184, rad: 360, qual: 2, preu: 83 },
+    { id: 'case-air903', nom: 'Montech AIR 903 MAX', q: 'Montech AIR 903 MAX', m: ['air 903'], x: [], forms: ['ATX', 'mATX', 'ITX'], gpuMax: 400, cooler: 180, rad: 360, qual: 2, preu: 78 },
+    { id: 'case-popair', nom: 'Fractal Design Pop Air', q: 'Fractal Design Pop Air', m: ['pop air'], x: ['mini', '\\bxl\\b'], forms: ['ATX', 'mATX', 'ITX'], gpuMax: 405, cooler: 170, rad: 280, qual: 2, preu: 120 },
+    { id: 'case-h5flow', nom: 'NZXT H5 Flow', q: 'NZXT H5 Flow', m: ['h5 flow'], x: ['elite'], forms: ['ATX', 'mATX', 'ITX'], gpuMax: 365, cooler: 165, rad: 280, qual: 2, preu: 78 },
+    { id: 'case-500dx', nom: 'be quiet! Pure Base 500DX', q: 'be quiet Pure Base 500DX', m: ['500dx'], x: [], forms: ['ATX', 'mATX', 'ITX'], gpuMax: 369, cooler: 190, rad: 360, qual: 2, preu: 126 },
+    { id: 'case-o11evo', nom: 'Lian Li O11 Dynamic EVO', q: 'Lian Li O11 Dynamic EVO', m: ['o11', 'evo'], x: ['\\bxl\\b', 'mini'], forms: ['ATX', 'mATX', 'ITX'], gpuMax: 420, cooler: 167, rad: 360, qual: 3, preu: 174 },
+    { id: 'case-h9flow', nom: 'NZXT H9 Flow', q: 'NZXT H9 Flow', m: ['h9 flow'], x: ['elite'], forms: ['ATX', 'mATX', 'ITX'], gpuMax: 435, cooler: 165, rad: 360, qual: 3, preu: 129 },
+    { id: 'case-north', nom: 'Fractal Design North', q: 'Fractal Design North', m: ['fractal', 'north'], x: ['\\bxl\\b'], forms: ['ATX', 'mATX', 'ITX'], gpuMax: 355, cooler: 170, rad: 360, qual: 3, preu: 138 },
   ];
 
   // Tots suporten AM4, AM5, LGA1700 i LGA1851. alt = alçada (aire) o mida del radiador (líquida).

@@ -5,6 +5,9 @@ Tries l'ús i el pressupost i et munta un PC peça a peça: **compatible** (sòc
 gràfica, dissipador, font…) i **equilibrat** (sense colls d'ampolla entre processador i gràfica), amb **preus reals**
 d'Alternate i LDLC i enllaços de compra.
 
+També pots **triar tu les peces** (processador, placa, caixa…): per a cada lloc només et surten les que són compatibles amb
+les que ja has triat, i el programa completa la resta amb el pressupost.
+
 En català, espanyol, francès i anglès. Sense comptes, sense anuncis i sense enllaços d'afiliat.
 
 ## Baixades

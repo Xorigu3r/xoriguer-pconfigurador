@@ -145,3 +145,14 @@ a.boto { display: inline-block; text-decoration: none; background: linear-gradie
   .marca-mot { font-size: 24px; }
   .cap-falco { width: 42px; height: 42px; }
 }
+
+/* Mode: automàtic o a mà */
+.perfils.modes { grid-template-columns: repeat(2, 1fr); }
+.peca.buida { border-style: dashed; background: transparent; }
+.peca.buida .nom { color: var(--suau); font-weight: 500; }
+.peca .botons button.tria { background: linear-gradient(135deg, #FFA82E, #F2650F); color: #1E2A3B; border-color: transparent; font-weight: 700; }
+.alt-filtre { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 12px; padding: 4px 18px 0; }
+.alt-filtre label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.alternatives li button:disabled { opacity: .4; cursor: not-allowed; }
+.alternatives small.treu { color: #ffc27a; }
+.alternatives .sep { list-style: none; padding: 10px 6px 2px; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; color: var(--suau); }

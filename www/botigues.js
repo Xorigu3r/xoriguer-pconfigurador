@@ -90,7 +90,7 @@
     ram: ['so-?dimm', 'sodimm'],
     ssd: ['externo', 'portable', 'usb'],
     psu: ['cable', 'extensi', 'kit de cables'],
-    case: ['cristal de recambio', 'soporte', 'kit', 'panel'],
+    case: ['cristal de recambio', 'soporte', 'kit', '^panel'],   // «panel de cristal templado» és normal en una caixa
     cooler: ['pasta', 'ventilador de recambio', 'kit de montaje', 'soporte'],
   };
   const re = s => new RegExp(s, 'i');

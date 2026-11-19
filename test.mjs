@@ -52,5 +52,30 @@ for (const perfil of Object.keys(M.PERFILS)) {
   }
 }
 
+// 4. Muntatge a mà: només surten les peces compatibles amb les triades
+{
+  const cpu = byId['r7-7800x3d'];
+  let parts = { cpu }, triades = { cpu: true };
+  const mbs = M.opcions(CAT, 'gamer', parts, triades, 'mb').filter(o => !o.errors.length).map(o => o.peca);
+  ok(mbs.length > 0 && mbs.every(m => m.socket === 'AM5' && m.maxTdp >= cpu.tdp), 'a mà: plaques per al 7800X3D');
+  ok(!mbs.some(m => m.chip === 'A620' && m.maxTdp < cpu.tdp), 'a mà: sense A620 fluixes');
+  const am4 = M.opcions(CAT, 'gamer', parts, triades, 'mb').find(o => o.peca.socket === 'AM4');
+  ok(am4.errors.length && am4.treu.includes('cpu'), 'a mà: placa AM4 treuria el processador');
+  ok(M.opcions(CAT, 'gamer', parts, triades, 'ram').filter(o => !o.errors.length).every(o => o.peca.tipus === 'DDR5'), 'a mà: sense placa, la RAM segueix el processador');
+  let t = M.tria(CAT, 'gamer', parts, triades, 'mb', byId['mb-b650m-d3hp'], null);
+  t = M.tria(CAT, 'gamer', t.parts, t.triades, 'ram', byId['ram-d5-32'], null);
+  const rams = M.opcions(CAT, 'gamer', t.parts, t.triades, 'ram').filter(o => !o.errors.length);
+  ok(rams.every(o => o.peca.tipus === 'DDR5'), 'a mà: només DDR5');
+  const t2 = M.tria(CAT, 'gamer', t.parts, t.triades, 'mb', byId['mb-b550m-k'], null);
+  ok(t2.trets.includes('cpu') && t2.trets.includes('ram') && !t2.triades.cpu, 'a mà: placa AM4 treu processador i RAM');
+  t = M.tria(CAT, 'gamer', t.parts, t.triades, 'case', byId['case-q300l'], null);
+  const grans = M.opcions(CAT, 'gamer', t.parts, t.triades, 'gpu').filter(o => !o.errors.length).map(o => o.peca);
+  ok(grans.every(g => !g || g.len <= 360), 'a mà: gràfiques que caben a la Q300L');
+  const r = M.completaTriades(CAT, 'gamer', 2500, t.parts, t.triades, null);
+  ok(r.ok && r.parts.cpu.id === 'r7-7800x3d' && r.parts.case.id === 'case-q300l' && r.errors.length === 0, 'a mà: completa respectant les triades');
+  const m = M.resumMa('gamer', 2500, t.parts, t.triades, null);
+  ok(!m.ok && m.falten.includes('gpu') && m.errors.length === 0, 'a mà: resum a mig fer sense errors falsos');
+}
+
 console.log(fallades ? `\n${fallades} proves fallades` : 'Totes les proves bé');
 process.exit(fallades ? 1 : 0);

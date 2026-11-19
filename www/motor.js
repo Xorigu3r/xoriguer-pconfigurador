@@ -120,6 +120,8 @@
       if (ram.tipus !== mb.mem) E('memRam', { ram: ram.tipus, mb: mb.mem });
       if (ram.mod > mb.slots) E('ranures', { mod: ram.mod, slots: mb.slots });
     }
+    // sense placa encara (muntatge a mà): la RAM ha de ser la que admet el processador
+    if (cpu && ram && !mb && !cpu.mem.includes(ram.tipus)) E('ramCpu', { mem: ram.tipus });
     if (ssd && mb && mb.m2 < 1) E('m2');
     if (mb && caixa && !caixa.forms.includes(mb.form)) E('format', { mb: mb.form });
     if (gpu && caixa && gpu.len > caixa.gpuMax) E('gpuLlarg', { len: gpu.len, max: caixa.gpuMax });
@@ -275,7 +277,8 @@
       const cands = [];
       for (const cpu of cpus) {
         for (const gpu of gpus) {
-          if (gpu && P.dgpu && gpu.g > sostre(cpu) * P.coll) continue; // coll d'ampolla massa gran
+          // coll d'ampolla massa gran (si l'usuari ha triat ell mateix el processador i la gràfica, mana ell)
+          if (gpu && P.dgpu && !(fixades.cpu && fixades.gpu !== undefined) && gpu.g > sostre(cpu) * P.coll) continue;
           const parts = completa(cat, perfil, nivell, cpu, gpu, preus, fixades, b);
           if (!parts) continue;
           const c = total(parts, preus);
@@ -350,7 +353,71 @@
     return resultat(perfil, b, nou, preus);
   }
 
-  const MOTOR = { SLOTS, PERFILS, munta, valida, alternatives, canvia, total, preuDe, coll, consum, fontRecomanada, puntuacio, equilibri };
+  // ---------- Muntatge a mà ----------
+  // Peces que intervenen en cada incompatibilitat (per saber què cal treure si en tries una que no hi va).
+  const PECES_ERROR = {
+    socket: ['cpu', 'mb'], memCpu: ['cpu', 'mb'], ramCpu: ['cpu', 'ram'], tdpPlaca: ['cpu', 'mb'], memRam: ['ram', 'mb'], ranures: ['ram', 'mb'],
+    m2: ['mb', 'ssd'], format: ['mb', 'case'], gpuLlarg: ['gpu', 'case'], senseVideo: ['cpu', 'gpu'],
+    dissiFluix: ['cooler', 'cpu'], dissiAlt: ['cooler', 'case'], radiador: ['cooler', 'case'], senseDissi: ['cpu', 'cooler'],
+    fontFluixa: ['psu', 'cpu', 'gpu'],
+  };
+  // Errors entre peces ja triades. triades: { slot: true } (gpu/cooler a null i triats = gràfics integrats / de sèrie).
+  function conflictes(parts, perfil, triades) {
+    return valida(parts, perfil).errors.filter(e => {
+      const s = PECES_ERROR[e.k];
+      if (!s) return false;
+      if (e.k === 'fontFluixa') return !!triades.psu;
+      return s.every(x => triades[x]);
+    });
+  }
+  // Totes les peces d'un lloc amb el que passaria si la tries: compatible o no, què s'hauria de treure i el preu.
+  //   treu: llocs que deixarien de ser compatibles (es buiden en triar-la). bloc: no es pot triar (font massa petita).
+  function opcions(cat, perfil, parts, triades, slot, preus) {
+    const T = Object.assign({}, triades, { [slot]: true });
+    const llista = (slot === 'gpu' || slot === 'cooler' ? [null] : []).concat(cat[slot]).map(p => {
+      const nou = Object.assign({}, parts, { [slot]: p });
+      const errors = conflictes(nou, perfil, T);
+      const treu = new Set();
+      let bloc = false;
+      for (const e of errors) {
+        if (e.k === 'fontFluixa' && slot === 'psu') { bloc = true; continue; }
+        if (e.k === 'fontFluixa') { treu.add('psu'); continue; }
+        for (const x of PECES_ERROR[e.k]) if (x !== slot) treu.add(x);
+      }
+      const v = valida(nou, perfil);
+      return { peca: p, preu: preuDe(p, preus), errors, treu: [...treu], bloc, coll: v.info.coll, disponible: !p || disponible(p, preus) };
+    });
+    return llista;
+  }
+  // Tria una peça a mà: buida les que deixen de ser compatibles. Torna { parts, triades, trets: [slots] }.
+  function tria(cat, perfil, parts, triades, slot, peca, preus) {
+    const o = opcions(cat, perfil, parts, triades, slot, preus).find(x => (x.peca && peca ? x.peca.id === peca.id : x.peca === peca));
+    const nou = Object.assign({}, parts, { [slot]: peca });
+    const T = Object.assign({}, triades, { [slot]: true });
+    const trets = o ? o.treu : [];
+    for (const s of trets) { nou[s] = null; delete T[s]; }
+    return { parts: nou, triades: T, trets };
+  }
+  // Completa amb el pressupost les peces que falten, respectant les triades.
+  function completaTriades(cat, perfil, pressupost, parts, triades, preus) {
+    const fixades = {};
+    for (const s of SLOTS) if (triades[s]) fixades[s] = parts[s];
+    return munta(cat, perfil, pressupost, { preus, fixades });
+  }
+  // Resum d'un muntatge a mig fer (o acabat) fet a mà.
+  function resumMa(perfil, b, parts, triades, preus) {
+    const r = resultat(perfil, b, parts, preus);
+    const falten = SLOTS.filter(s => !triades[s]);
+    r.falten = falten;
+    r.errors = conflictes(parts, perfil, triades);
+    r.ok = !falten.length && !r.errors.length;
+    // avisos només de les peces triades (sense «falta gràfica» si encara no l'has triada)
+    r.avisos = r.avisos.filter(a => !(a.k === 'perfilGpu' && !triades.gpu) && !(a.k === 'dissiSerie' && !triades.cooler) && !(/^font/.test(a.k) && !triades.psu) && a.k !== 'massaPressupost');
+    if (falten.length) r.sobra = Math.round((b - r.total) * 100) / 100;
+    return r;
+  }
+
+  const MOTOR = { SLOTS, PERFILS, munta, valida, alternatives, canvia, total, preuDe, coll, consum, fontRecomanada, puntuacio, equilibri, opcions, tria, completaTriades, resumMa, conflictes };
   if (typeof module !== 'undefined' && module.exports) module.exports = MOTOR;
   else root.MOTOR = MOTOR;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -109,10 +109,23 @@
   $('#actualitza').addEventListener('click', () => actualitzaPreus(false));
 
   // ---------- Estat de la pantalla ----------
-  const estat = { perfil: llegeix('perfil', 'gamer'), pressupost: llegeix('pressupost', 1200), res: null };
+  const estat = { perfil: M.PERFILS[llegeix('perfil', 'gamer')] ? llegeix('perfil', 'gamer') : 'gamer', pressupost: llegeix('pressupost', 1200), res: null, mode: llegeix('mode', 'auto') };
+  // Muntatge a mà: peces triades (gpu/cooler a null i triats = gràfics integrats / dissipador de sèrie).
+  const PER_ID = Object.fromEntries(M.SLOTS.flatMap(s => CAT[s].map(p => [p.id, p])));
+  const ma = { parts: {}, triades: {} };
+  (function () {
+    const d = llegeix('ma', null);
+    if (!d || !d.triades) return;
+    for (const s of M.SLOTS) {
+      if (!d.triades[s]) continue;
+      const id = d.ids[s];
+      if (id == null) { ma.parts[s] = null; ma.triades[s] = true; } else if (PER_ID[id]) { ma.parts[s] = PER_ID[id]; ma.triades[s] = true; }
+    }
+  })();
+  const desaMa = () => desa('ma', { ids: Object.fromEntries(M.SLOTS.map(s => [s, ma.parts[s] ? ma.parts[s].id : null])), triades: ma.triades });
 
   function pintaPerfil() {
-    $$('.perfil').forEach(b => b.setAttribute('aria-checked', b.dataset.perfil === estat.perfil ? 'true' : 'false'));
+    $$('.perfil[data-perfil]').forEach(b => b.setAttribute('aria-checked', b.dataset.perfil === estat.perfil ? 'true' : 'false'));
     const r = M.PERFILS[estat.perfil].rang;
     const min = minim(estat.perfil);
     $('#consell').textContent = T_('Amb els preus d\'ara, a partir de {m} €. El més raonable per a aquest ús: fins a {b} €.', { m: (min || r[0]).toLocaleString(I18N.llengua), b: r[1].toLocaleString(I18N.llengua) });
@@ -126,10 +139,50 @@
     while (hi - lo > 10) { const m = (lo + hi) >> 1; if (M.munta(CAT, perfil, m, { preus: preus() }).ok) hi = m; else lo = m; }
     return (minims[perfil] = Math.ceil(hi / 10) * 10);
   }
-  $$('.perfil').forEach(b => b.addEventListener('click', () => {
+  $$('.perfil[data-perfil]').forEach(b => b.addEventListener('click', () => {
     estat.perfil = b.dataset.perfil; desa('perfil', estat.perfil); pintaPerfil();
-    if (estat.res) munta(true);
+    if (estat.mode === 'ma') pintaMa(false);
+    else if (estat.res) munta(true);
   }));
+
+  // ---------- Mode: automàtic o a mà ----------
+  function posaMode(m, desplaca) {
+    estat.mode = m; desa('mode', m);
+    $$('.mode').forEach(b => b.setAttribute('aria-checked', b.dataset.mode === m ? 'true' : 'false'));
+    $('#munta').textContent = m === 'ma' ? T_('Completa el que falta amb el pressupost') : T_("Munta'm el PC");
+    $('#ama').hidden = m === 'ma';
+    $('#buida').hidden = m !== 'ma';
+    $('#refa').hidden = m === 'ma';
+    if (m === 'ma') pintaMa(desplaca);
+    else if (estat.res && estat.res.auto) pinta(estat.res, false);
+    else { estat.res = null; $('#resultat').hidden = true; }
+  }
+  $$('.mode').forEach(b => b.addEventListener('click', () => posaMode(b.dataset.mode, true)));
+  function pintaMa(desplaca) {
+    estat.res = M.resumMa(estat.perfil, estat.pressupost, ma.parts, ma.triades, preus());
+    pinta(estat.res, desplaca);
+  }
+  // Omple les peces que falten amb el pressupost (les triades no es toquen).
+  function completaMa() {
+    const r = M.completaTriades(CAT, estat.perfil, estat.pressupost, ma.parts, ma.triades, preus());
+    if (!r.ok) {
+      toast(r.minim ? T_('Amb les peces que has triat, el PC complet costaria uns {m}: puja el pressupost o canvia alguna peça.', { m: euros(r.minim) })
+        : T_("No hi ha cap manera de completar-lo amb les peces que has triat: canvia'n alguna."));
+      return;
+    }
+    for (const s of M.SLOTS) { ma.parts[s] = r.parts[s]; ma.triades[s] = true; }
+    desaMa(); pintaMa(true);
+  }
+  $('#ama').addEventListener('click', () => {
+    const r = estat.res; if (!r) return;
+    for (const s of M.SLOTS) { ma.parts[s] = r.parts[s] || null; ma.triades[s] = true; }
+    desaMa(); posaMode('ma', false);
+    toast(T_('Ara pots canviar qualsevol peça: només et sortiran les que hi van bé.'));
+  });
+  $('#buida').addEventListener('click', () => {
+    for (const s of M.SLOTS) { delete ma.parts[s]; delete ma.triades[s]; }
+    desaMa(); pintaMa(false);
+  });
 
   function posaPressupost(v, des) {
     v = Math.max(300, Math.min(20000, Math.round(+v || 0)));
@@ -139,8 +192,11 @@
   }
   $('#rang').addEventListener('input', e => posaPressupost(e.target.value, 'rang'));
   $('#xifra').addEventListener('change', e => posaPressupost(e.target.value, 'xifra'));
-  $('#xifra').addEventListener('keydown', e => { if (e.key === 'Enter') { posaPressupost(e.target.value); munta(true); } });
-  $('#munta').addEventListener('click', () => { posaPressupost($('#xifra').value); munta(true); });
+  const accio = () => { posaPressupost($('#xifra').value); if (estat.mode === 'ma') completaMa(); else munta(true); };
+  $('#xifra').addEventListener('keydown', e => { if (e.key === 'Enter') accio(); });
+  $('#munta').addEventListener('click', accio);
+  // a mà, el pressupost només canvia el «et sobren»
+  ['#xifra', '#rang'].forEach(q => $(q).addEventListener('change', () => { if (estat.mode === 'ma') pintaMa(false); }));
   $('#refa').addEventListener('click', () => munta(true));
 
   // ---------- Textos ----------
@@ -150,6 +206,7 @@
     falta: 'Falta una peça: {s}.',
     socket: 'El processador és {cpu} i la placa {mb}: no encaixen.',
     memCpu: 'Aquest processador no admet memòria {mem}.',
+    ramCpu: 'Aquest processador no admet memòria {mem}.',
     tdpPlaca: 'La placa ({chip}) no alimenta bé un processador de {tdp} W (màxim {max} W).',
     memRam: 'La RAM és {ram} i la placa vol {mb}.',
     ranures: 'La RAM té {mod} mòduls i la placa només té {slots} ranures.',
@@ -202,6 +259,7 @@
       $('#sense-text').textContent = r.minim ? T_('Amb els preus d\'ara, el PC més econòmic per a aquest ús que sigui compatible i equilibrat costa uns {m}. Puja el pressupost o tria un altre ús.', { m: euros(r.minim) }) : T_('No s\'ha trobat cap combinació vàlida.');
       return;
     }
+    r.auto = true;
     estat.res = r;
     pinta(r, desplaca);
   }
@@ -230,19 +288,37 @@
     for (const e of r.errors) { const li = document.createElement('li'); li.textContent = '⛔ ' + missatge(e); $('#r-errors').append(li); }
     $('#r-avisos').innerHTML = '';
     for (const a of r.avisos) { const li = document.createElement('li'); li.textContent = '⚠️ ' + missatge(a); $('#r-avisos').append(li); }
-    if (!r.errors.length) {
+    const falten = r.falten || [];
+    if (!r.errors.length && falten.length < M.SLOTS.length) {
       const li = document.createElement('li'); li.className = 'ok';
-      li.textContent = '✅ ' + T_('Totes les peces són compatibles entre elles (sòcol, memòria, mides, potència i refrigeració).');
+      li.textContent = '✅ ' + (falten.length ? T_('Les peces que has triat són compatibles entre elles.')
+        : T_('Totes les peces són compatibles entre elles (sòcol, memòria, mides, potència i refrigeració).'));
       $('#r-avisos').prepend(li);
+    }
+    if (falten.length) {
+      const li = document.createElement('li');
+      li.textContent = '🧩 ' + T_('Falten: {l}. Tria-les tu o prem «Completa el que falta».', { l: falten.map(s => T_(NOM_SLOT[s]).toLowerCase()).join(', ') });
+      $('#r-avisos').append(li);
     }
 
     const P = preus();
     const ul = $('#peces'); ul.innerHTML = '';
+    const aMa = estat.mode === 'ma';
     for (const s of M.SLOTS) {
       const p = r.parts[s];
       const o = p && P[p.id];
       const li = document.createElement('li'); li.className = 'peca';
-      const nom = p ? p.nom : (s === 'gpu' ? T_('Gràfics integrats') : T_('Dissipador de sèrie'));
+      if (aMa && !ma.triades[s]) {
+        li.classList.add('buida');
+        li.innerHTML = `<span class="ico">${ICO[s]}</span><div><div class="tipus"></div><div class="nom"></div></div><div class="preu"><b>—</b></div><div class="botons"></div>`;
+        li.querySelector('.tipus').textContent = T_(NOM_SLOT[s]);
+        li.querySelector('.nom').textContent = T_("Encara no l'has triada");
+        const b = document.createElement('button'); b.className = 'primari'; b.textContent = T_('Tria-la');
+        b.addEventListener('click', () => mostraAlternatives(s)); li.querySelector('.botons').append(b);
+        ul.append(li);
+        continue;
+      }
+      const nom =p ? p.nom : (s === 'gpu' ? T_('Gràfics integrats') : T_('Dissipador de sèrie'));
       const model = modelTrobat(o);
       let estoc = '';
       if (p) {
@@ -270,6 +346,11 @@
       }
       const canvi = document.createElement('button'); canvi.className = 'discret'; canvi.textContent = '⇄ ' + T_('Canvia');
       canvi.addEventListener('click', () => mostraAlternatives(s)); bt.append(canvi);
+      if (aMa) {
+        const treu = document.createElement('button'); treu.className = 'discret'; treu.textContent = '✕ ' + T_('Treu');
+        treu.addEventListener('click', () => { delete ma.parts[s]; delete ma.triades[s]; desaMa(); pintaMa(false); });
+        bt.append(treu);
+      }
       ul.append(li);
     }
     if (desplaca) $('#resultat').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -303,7 +384,60 @@
     $('#dlg-bot').showModal();
   }
 
+  let altObert = null;
+  $('#dlg-alt').addEventListener('close', () => { altObert = null; });
+  $('#alt-totes').addEventListener('change', () => { desa('altTotes', $('#alt-totes').checked); if (altObert) mostraOpcions(altObert); });
+
+  // A mà: les peces compatibles amb les que ja has triat (i, si vols, les altres amb el que s'hauria de treure).
+  function mostraOpcions(s) {
+    const P = preus();
+    altObert = s;
+    $('#alt-titol').textContent = T_(NOM_SLOT[s]);
+    $('#alt-filtre').hidden = false;
+    const totes = $('#alt-totes').checked = llegeix('altTotes', false);
+    const actualP = ma.triades[s] ? ma.parts[s] : undefined;
+    const llista = M.opcions(CAT, estat.perfil, ma.parts, ma.triades, s, P).filter(o => o.disponible);
+    const bones = llista.filter(o => !o.errors.length).sort((x, y) => x.preu - y.preu);
+    const dolentes = llista.filter(o => o.errors.length).sort((x, y) => x.bloc - y.bloc || x.preu - y.preu);
+    $('#alt-compta').textContent = T_('{n} compatibles amb les peces que has triat', { n: bones.length });
+    const ul = $('#alt-llista'); ul.innerHTML = '';
+    const fila = (o, mala) => {
+      const actual = actualP !== undefined && ((o.peca && actualP && o.peca.id === actualP.id) || (!o.peca && !actualP));
+      const li = document.createElement('li');
+      li.innerHTML = '<button><b></b><span class="dif"></span><small></small></button>';
+      const b = li.querySelector('button');
+      if (actual) b.classList.add('actual');
+      if (mala) b.classList.add('mal');
+      if (o.bloc) b.disabled = true;
+      b.querySelector('b').textContent = o.peca ? o.peca.nom : (s === 'gpu' ? T_('Gràfics integrats') : T_('Dissipador de sèrie'));
+      b.querySelector('.dif').textContent = actual ? T_('actual') : euros(o.preu);
+      const sm = b.querySelector('small');
+      if (mala) {
+        sm.textContent = '⛔ ' + missatge(o.errors[0]) + (o.treu.length ? ' ' + T_('Si la tries, es traurà: {l}.', { l: o.treu.map(x => T_(NOM_SLOT[x]).toLowerCase()).join(', ') }) : '');
+        sm.classList.add('treu');
+      } else sm.textContent = especificacions(s, o.peca) + (o.coll >= 8 ? ' · ' + T_('coll d\'ampolla {pc} %', { pc: o.coll }) : '');
+      b.addEventListener('click', () => {
+        $('#dlg-alt').close();
+        if (actual) return;
+        const t = M.tria(CAT, estat.perfil, ma.parts, ma.triades, s, o.peca, P);
+        ma.parts = t.parts; ma.triades = t.triades;
+        desaMa(); pintaMa(false);
+        if (t.trets.length) toast(T_("S'ha tret: {l}. No era compatible amb la peça nova.", { l: t.trets.map(x => T_(NOM_SLOT[x]).toLowerCase()).join(', ') }));
+      });
+      ul.append(li);
+    };
+    bones.forEach(o => fila(o, false));
+    if (!bones.length) { const li = document.createElement('li'); li.className = 'sep'; li.textContent = T_("Cap peça d'aquest tipus encaixa amb les que has triat."); ul.append(li); }
+    if (totes && dolentes.length) {
+      const li = document.createElement('li'); li.className = 'sep'; li.textContent = T_('No hi van bé'); ul.append(li);
+      dolentes.forEach(o => fila(o, true));
+    }
+    if (!$('#dlg-alt').open) $('#dlg-alt').showModal();
+  }
+
   function mostraAlternatives(s) {
+    if (estat.mode === 'ma') return mostraOpcions(s);
+    $('#alt-filtre').hidden = true;
     const r = estat.res; if (!r) return;
     const P = preus();
     $('#alt-titol').textContent = T_(NOM_SLOT[s]);
@@ -359,6 +493,7 @@
   // ---------- Inici ----------
   posaPressupost(estat.pressupost);
   pintaPerfil();
+  posaMode(estat.mode, false);
   pintaEstatPreus();
   // A l'app, si els preus tenen més de 12 hores, es refresquen sols en segon pla.
   const vell = !dataDirecte || Date.now() - new Date(dataDirecte).getTime() > 12 * 3600e3;
