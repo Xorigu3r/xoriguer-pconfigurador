@@ -18,6 +18,7 @@
   $('#idioma').addEventListener('change', e => { desa('idioma', e.target.value); location.reload(); });
   I18N.tradueix(document.body);
   document.title = 'Xoriguer PConfigurador';
+  const VERSIO = '1.2.0'; // igual que package.json
 
   // ---------- Plataforma i lectura de pàgines ----------
   const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36';
@@ -107,6 +108,40 @@
     }
   }
   $('#actualitza').addEventListener('click', () => actualitzaPreus(false));
+
+  // ---------- Opcions ----------
+  const NOM_PLAT = { escriptori: 'Windows / Linux', android: 'Android', web: 'Web' };
+  $('#versio').textContent = T_('Versió {v}', { v: VERSIO }) + ' · ' + NOM_PLAT[PLATAFORMA];
+  $('#opcions').addEventListener('click', () => $('#dlg-opc').showModal());
+
+  // Busca actualitzacions: el mateix versio.json que fa servir la pàgina de baixades de xoriguer.dev.
+  const URL_VERSIO = 'https://xoriguer.dev/versions/pconfigurador/versio.json';
+  const compara = (a, b) => {
+    const x = String(a).split(/[.\-]/).map(n => parseInt(n, 10) || 0), y = String(b).split(/[.\-]/).map(n => parseInt(n, 10) || 0);
+    for (let i = 0; i < Math.max(x.length, y.length); i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0);
+    return 0;
+  };
+  async function buscaActualitzacions() {
+    const info = $('#act-info'), boto = $('#busca-act'), baixa = $('#baixa-act');
+    baixa.hidden = true;
+    if (PLATAFORMA === 'web') { info.textContent = T_('La web sempre té la versió més nova: no cal actualitzar res.'); return; }
+    boto.disabled = true; info.textContent = T_('Buscant…');
+    try {
+      const r = await fetch(URL_VERSIO + '?t=' + Date.now(), { cache: 'no-store' });
+      if (!r.ok) throw new Error(r.status);
+      const v = await r.json();
+      const nova = v.versio;
+      if (!nova || compara(nova, VERSIO) <= 0) { info.textContent = T_('Ja tens la versió més nova ({v}).', { v: VERSIO }); return; }
+      const linux = window.natiu && window.natiu.so === 'linux';
+      const url = PLATAFORMA === 'android' ? v.apk : linux ? v.linux : v.url;
+      info.textContent = T_('Hi ha una versió nova: {n} (tens la {v}).', { n: nova, v: VERSIO });
+      baixa.href = url || 'https://xoriguer.dev/'; baixa.hidden = false;
+    } catch {
+      info.textContent = T_('No s\'ha pogut comprovar: mira si tens connexió a internet.');
+    } finally { boto.disabled = false; }
+  }
+  $('#busca-act').addEventListener('click', buscaActualitzacions);
+  $$('a[data-extern]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); obreEnllac(a.href); }));
 
   // ---------- Estat de la pantalla ----------
   const estat = { perfil: M.PERFILS[llegeix('perfil', 'gamer')] ? llegeix('perfil', 'gamer') : 'gamer', pressupost: llegeix('pressupost', 1200), res: null, mode: llegeix('mode', 'auto') };

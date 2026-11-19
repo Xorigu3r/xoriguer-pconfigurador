@@ -45,6 +45,18 @@ a { color: var(--taronja); }
 .marca-x { height: .795em; width: 1.258em; margin-right: -.167em; vertical-align: baseline; }
 .marca-resta { display: inline-block; transform: skewX(-11.9deg); transform-origin: 0 100%; }
 .marca-sub { font-family: var(--text); font-weight: 600; color: var(--taronja); letter-spacing: .3em; font-size: 11px; margin-top: 6px; padding-left: 2px; }
+.opcions-boto { font-size: 1.35rem; padding: 6px 10px; border-radius: 12px; line-height: 1; }
+.opc { padding: 6px 14px 14px; }
+.opc-bloc { border-bottom: 1px solid var(--linia); padding: 10px 0 14px; }
+.opc-bloc:last-child { border-bottom: 0; }
+.opc-bloc h3 { margin: 0 0 8px; font-size: 1rem; }
+.opc-bloc p { margin: 6px 0; }
+.opc .idioma { width: 100%; padding: 9px 10px; font-size: 1rem; }
+.quant-cap { display: flex; align-items: center; gap: 10px; }
+.quant-cap img { width: 46px; height: 46px; object-fit: contain; }
+.quant-cap small { display: block; margin-top: 3px; }
+.opc .accions a { padding: 8px 14px; border-radius: 12px; }
+.quant .accions a { padding: 8px 14px; border-radius: 12px; }
 .idioma { background: var(--fons3); border: 1px solid var(--linia); border-radius: 10px; padding: 6px 8px; font-size: .85rem; }
 
 main { padding: 14px 16px; max-width: 860px; margin: 0 auto; }
@@ -156,3 +168,5 @@ a.boto { display: inline-block; text-decoration: none; background: linear-gradie
 .alternatives li button:disabled { opacity: .4; cursor: not-allowed; }
 .alternatives small.treu { color: #ffc27a; }
 .alternatives .sep { list-style: none; padding: 10px 6px 2px; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; color: var(--suau); }
+
+[hidden] { display: none !important; }

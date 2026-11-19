@@ -18,9 +18,7 @@
       </div>
       <div class="marca-sub">PCONFIGURADOR</div>
     </div>
-    <select id="idioma" class="idioma" aria-label="Idioma">
-      <option value="">Auto</option><option value="ca">CA</option><option value="es">ES</option><option value="fr">FR</option><option value="en">EN</option>
-    </select>
+    <button id="opcions" class="opcions-boto" aria-label="Opcions" title="Opcions">⚙️</button>
   </header>
 
   <main>
@@ -38,7 +36,7 @@
       <h2>Com el vols muntar?</h2>
       <div class="perfils modes" role="radiogroup">
         <button class="perfil mode" role="radio" data-mode="auto"><span class="ico">⚡</span><b>Automàtic</b><small>Tu poses el pressupost i el programa tria les peces</small></button>
-        <button class="perfil mode" role="radio" data-mode="ma"><span class="ico">🛠️</span><b>Tria tu les peces</b><small>Tries cada peça i només et surten les que hi van bé</small></button>
+        <button class="perfil mode" role="radio" data-mode="ma"><span class="ico">🛠️</span><b>Manual</b><small>Tries tu cada peça entre les que són compatibles</small></button>
       </div>
     </section>
 
@@ -107,6 +105,39 @@
     <div class="dlg-cap"><h2 id="bot-titol"></h2><button class="discret" data-tanca>✕</button></div>
     <ul id="bot-llista" class="botigues"></ul>
     <p class="suau petit">Amazon, PcComponentes i Coolmod no deixen llegir els preus automàticament: s'obre la cerca a la botiga.</p>
+  </dialog>
+
+  <dialog id="dlg-opc" class="dialeg">
+    <div class="dlg-cap"><h2>Opcions</h2><button class="discret" data-tanca>✕</button></div>
+    <div class="opc">
+      <section class="opc-bloc">
+        <h3>🌐 Idioma</h3>
+        <select id="idioma" class="idioma" aria-label="Idioma">
+          <option value="">Automàtic</option><option value="ca" data-no-t>Català</option><option value="es" data-no-t>Español</option><option value="fr" data-no-t>Français</option><option value="en" data-no-t>English</option>
+        </select>
+      </section>
+      <section class="opc-bloc">
+        <h3>⬆️ Actualitzacions</h3>
+        <p id="act-info" class="petit suau">Mira si hi ha una versió nova de l'aplicació a xoriguer.dev.</p>
+        <div class="accions">
+          <button id="busca-act" class="primari">🔄 Busca actualitzacions</button>
+          <a id="baixa-act" class="boto" href="https://xoriguer.dev/" data-extern hidden>⬇️ Baixa-la</a>
+        </div>
+      </section>
+      <section class="opc-bloc quant">
+        <h3>ℹ️ Quant a</h3>
+        <div class="quant-cap">
+          <img src="icons/simbol.png" alt="">
+          <div><b data-no-t>Xoriguer PConfigurador</b><small id="versio" class="suau"></small></div>
+        </div>
+        <p class="petit">Munta un PC a peces amb el teu pressupost: compatible, equilibrat i amb preus reals.</p>
+        <p class="petit suau">Els preus surten d'Alternate i LDLC. Cap enllaç és d'afiliat i l'app no recull cap dada.</p>
+        <div class="accions">
+          <a class="boto" href="https://xoriguer.dev/" data-extern>xoriguer.dev</a>
+          <a class="boto" href="https://github.com/Xorigu3r/xoriguer-pconfigurador" data-extern>GitHub</a>
+        </div>
+      </section>
+    </div>
   </dialog>
 
   <div id="toast" class="toast" hidden></div>
