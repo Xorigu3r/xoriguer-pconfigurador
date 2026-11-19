@@ -18,7 +18,7 @@
   $('#idioma').addEventListener('change', e => { desa('idioma', e.target.value); location.reload(); });
   I18N.tradueix(document.body);
   document.title = 'Xoriguer PConfigurador';
-  const VERSIO = '1.2.0'; // igual que package.json
+  const VERSIO = '1.2.1'; // igual que package.json
 
   // ---------- Plataforma i lectura de pàgines ----------
   const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36';

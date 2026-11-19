@@ -1,7 +1,7 @@
-"""Genera el logo i les icones de Xoriguer PConfigurador (falcó de la casa + torre de PC).
+"""Genera el logo i les icones de Xoriguer PConfigurador (torre de PC a tota la icona, sense falcó).
 
 Ús:  python -I eines/genera_logo.py   (des de l'arrel del projecte)
-Llenç de 512 com les altres apps: falcó a (36, 66) amb 440 d'ample, motiu del projecte a sota.
+Llenç de 512: la torre es dibuixa a 190-322 × 246-470 i després s'amplia fins a 468 d'alt, centrada.
 Fons «Blau pissarra» #1E2A3B (mai negre). Rètol: marca.py de LOGOS-XORIGUER.
 Surt: www/icons/*, assets/* (Android, @capacitor/assets) i build/icon.png + build/icon.ico (Windows/Linux).
 """
@@ -14,7 +14,7 @@ WWW = ARREL / 'www'
 ICONS = WWW / 'icons'
 ASSETS = ARREL / 'assets'
 BUILD = ARREL / 'build'
-sys.path.insert(0, str(Path('C:/Users/Xorigu3r/Documents/LOGOS-XORIGUER/_eines')))
+sys.path.insert(0, str(Path('D:/Projectes Xoriguer/LOGOS-XORIGUER/_eines')))
 import marca  # noqa: E402
 
 FONS = (30, 42, 59, 255)        # #1E2A3B
@@ -34,21 +34,10 @@ def degradat_vertical(N, c1, c2, y0, y1):
     return g.resize((N, N))
 
 
-def dibuixa(mida, escala=1.0, amb_fons=True, rodo=False, amb_falco=True):
+def dibuixa(mida, escala=1.0, amb_fons=True, rodo=False):
     N = 512 * S
     k = S
     capa = Image.new('RGBA', (N, N), (0, 0, 0, 0))
-
-    # resplendor taronja darrere la torre
-    g = Image.new('RGBA', (N, N), (0, 0, 0, 0))
-    ImageDraw.Draw(g).ellipse([160 * k, 240 * k, 352 * k, 470 * k], fill=TARONJA[:3] + (90,))
-    capa.alpha_composite(g.filter(ImageFilter.GaussianBlur(40 * k)))
-
-    if amb_falco:
-        falco = Image.open(ICONS / 'falco.png').convert('RGBA')
-        fw = 440 * k
-        falco = falco.resize((fw, round(fw * falco.height / falco.width)), Image.LANCZOS)
-        capa.alpha_composite(falco, (36 * k, 66 * k))
 
     # torre: cos amb degradat taronja
     x0, y0, x1, y1 = 190, 246, 322, 470
@@ -79,6 +68,17 @@ def dibuixa(mida, escala=1.0, amb_fons=True, rodo=False, amb_falco=True):
         d.arc([(cx - r + 12) * k, (cy - r + 12) * k, (cx + r - 12) * k, (cy + r - 12) * k], a, a + 34, fill=CREMA, width=12 * k)
     d.ellipse([(cx - 17) * k, (cy - 17) * k, (cx + 17) * k, (cy + 17) * k], fill=FONS2)
     d.ellipse([(cx - 9) * k, (cy - 9) * k, (cx + 9) * k, (cy + 9) * k], fill=FONS2, outline=CREMA, width=3 * k)
+
+    # la torre (dibuixada a la mida antiga) s'amplia perquè ocupi tota la icona
+    TX0, TY0, TX1, TY1 = 184, 240, 328, 476
+    torre = capa.crop((TX0 * k, TY0 * k, TX1 * k, TY1 * k))
+    alt = 468 * k
+    torre = torre.resize((round(torre.width * alt / torre.height), alt), Image.LANCZOS)
+    capa = Image.new('RGBA', (N, N), (0, 0, 0, 0))
+    g = Image.new('RGBA', (N, N), (0, 0, 0, 0))
+    ImageDraw.Draw(g).ellipse([96 * k, 70 * k, 416 * k, 460 * k], fill=TARONJA[:3] + (80,))
+    capa.alpha_composite(g.filter(ImageFilter.GaussianBlur(48 * k)))
+    capa.alpha_composite(torre, ((N - torre.width) // 2, (N - torre.height) // 2))
 
     if escala != 1.0:
         mm = round(N * escala)
@@ -112,7 +112,7 @@ if __name__ == '__main__':
     logo_complet().convert('RGB').save(ICONS / 'logo-complet.png')
     # Android (@capacitor/assets)
     dibuixa(1024, escala=0.92).convert('RGB').save(ASSETS / 'icon-only.png')
-    dibuixa(1024, escala=0.6, amb_fons=False).save(ASSETS / 'icon-foreground.png')
+    dibuixa(1024, escala=0.64, amb_fons=False).save(ASSETS / 'icon-foreground.png')
     Image.new('RGB', (1024, 1024), FONS[:3]).save(ASSETS / 'icon-background.png')
     sp = Image.new('RGBA', (2732, 2732), FONS)
     sp.alpha_composite(logo_complet(1000), (866, 866))
