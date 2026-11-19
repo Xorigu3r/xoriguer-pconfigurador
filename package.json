@@ -1,0 +1,79 @@
+{
+  "name": "xoriguer-pconfigurador",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Configurador de PC per pressupost: peces compatibles, equilibrades i amb preus reals",
+  "main": "electron/main.js",
+  "author": "Xoriguer",
+  "scripts": {
+    "test": "node test.mjs",
+    "serve": "node scripts/serve.mjs",
+    "preus": "node scripts/actualitza-preus.mjs",
+    "desktop": "electron .",
+    "copy:cap": "node -e \"require('fs').copyFileSync('node_modules/@capacitor/core/dist/capacitor.js','www/capacitor.js')\"",
+    "sync": "npm run copy:cap && npx cap sync android",
+    "apk": "npm run sync && powershell -ExecutionPolicy Bypass -File scripts/build-apk.ps1",
+    "exe": "electron-builder --win",
+    "linux": "electron-builder --linux"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.0",
+    "@capacitor/core": "8.6.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^4.0.0",
+    "@capacitor/cli": "8.6.0",
+    "electron": "^38.2.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "cat.xoriguer.pconfigurador",
+    "productName": "Xoriguer PConfigurador",
+    "executableName": "XoriguerPConfigurador",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "electron/**",
+      "www/**",
+      "!www/capacitor.js",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "portable": {
+      "artifactName": "XoriguerPConfigurador.exe"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "tar.gz",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "Utility",
+      "synopsis": "Configurador de PC per pressupost",
+      "artifactName": "XoriguerPConfigurador-${version}-linux-x64.${ext}"
+    },
+    "compression": "normal"
+  }
+}

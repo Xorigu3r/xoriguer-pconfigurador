@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1E2A3B">
+  <title>Xoriguer PConfigurador</title>
+  <meta name="description" content="Munta un PC a peces amb el teu pressupost: compatible, equilibrat i amb preus reals.">
+  <link rel="icon" href="icons/favicon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="cap" data-no-t>
+    <img class="cap-falco" src="icons/simbol.png" alt="">
+    <div class="marca">
+      <div class="marca-mot" aria-label="Xoriguer">
+        <svg class="marca-x" viewBox="0 0 242 153" aria-hidden="true"><path fill="#F6EFE2" d="M96.3,19.0 L94.7,18.0 L46.7,18.3 L50.7,25.0 L73.0,53.3 L91.3,78.7 L15.3,140.0 L0.3,151.0 L0.0,152.7 L48.3,152.7 L139.7,79.3 L136.7,73.3Z M146.3,87.0 L146.7,88.7 L130.0,109.3 L129.0,112.3 L122.7,118.7 L147.0,152.3 L195.7,152.7 L195.7,151.3 L173.7,123.3 L147.7,87.7Z"/><path fill="#FF8A00" d="M241.7,0.0 L199.3,0.0 L137.3,51.0 L137.0,52.7 L152.3,74.0Z"/><path fill="#F2650F" d="M146.7,88.3 L144.7,88.7 L109.3,118.0 L103.3,122.0 L85.7,136.7 L72.0,149.7 L76.0,148.7 L91.0,139.7 L123.0,118.0 L128.7,112.3 L129.7,109.3Z"/></svg><span class="marca-resta">ORIGUER</span>
+      </div>
+      <div class="marca-sub">PCONFIGURADOR</div>
+    </div>
+    <select id="idioma" class="idioma" aria-label="Idioma">
+      <option value="">Auto</option><option value="ca">CA</option><option value="es">ES</option><option value="fr">FR</option><option value="en">EN</option>
+    </select>
+  </header>
+
+  <main>
+    <section class="targeta">
+      <h2>Per a què el vols?</h2>
+      <div class="perfils" role="radiogroup">
+        <button class="perfil" role="radio" data-perfil="gamer"><span class="ico">🎮</span><b>Gamer</b><small>Jocs a bona qualitat</small></button>
+        <button class="perfil" role="radio" data-perfil="streaming"><span class="ico">🎙️</span><b>Streaming</b><small>Jugar i emetre alhora</small></button>
+        <button class="perfil" role="radio" data-perfil="oficina"><span class="ico">💼</span><b>Oficina</b><small>Ofimàtica, multitasca</small></button>
+        <button class="perfil" role="radio" data-perfil="navegar"><span class="ico">✉️</span><b>Navegar i correu</b><small>Internet, vídeos, correu</small></button>
+      </div>
+    </section>
+
+    <section class="targeta">
+      <h2>Pressupost</h2>
+      <div class="pressupost">
+        <input id="rang" type="range" min="300" max="5000" step="50" value="1200" aria-label="Pressupost">
+        <label class="euros"><input id="xifra" type="number" min="300" max="20000" step="10" value="1200" inputmode="numeric" aria-label="Pressupost en euros"><span>€</span></label>
+      </div>
+      <p id="consell" class="suau petit"></p>
+      <button id="munta" class="primari gran">Munta'm el PC</button>
+    </section>
+
+    <section id="preus-estat" class="targeta fina">
+      <div class="fila">
+        <div>
+          <b id="preus-titol">Preus</b>
+          <small id="preus-info"></small>
+        </div>
+        <button id="actualitza" class="discret">↻ Actualitza</button>
+      </div>
+      <div id="progres" class="progres" hidden><span></span></div>
+    </section>
+
+    <section id="resultat" hidden>
+      <div class="targeta resum">
+        <div class="resum-xifres">
+          <div><small>Total</small><b id="r-total" class="gros"></b></div>
+          <div><small id="r-sobra-et">Et sobren</small><b id="r-sobra"></b></div>
+          <div><small>Consum</small><b id="r-consum"></b></div>
+        </div>
+        <div id="r-equilibri" class="equilibri">
+          <div class="eq-fila"><span>Processador</span><div class="pista"><span id="eq-cpu"></span></div></div>
+          <div class="eq-fila"><span>Gràfica</span><div class="pista"><span id="eq-gpu"></span></div></div>
+          <p id="eq-text" class="petit"></p>
+        </div>
+        <ul id="r-errors" class="missatges errors"></ul>
+        <ul id="r-avisos" class="missatges"></ul>
+        <div class="accions">
+          <button id="copia">📋 Copia la llista</button>
+          <button id="refa" class="discret">↺ Torna a muntar</button>
+        </div>
+      </div>
+      <ul id="peces" class="peces"></ul>
+      <p class="suau petit nota">Els preus són els de les botigues en el moment de buscar-los i poden canviar. Les gràfiques tenen mides diferents segons el fabricant: el programa compta amb les versions més llargues. Cap enllaç és d'afiliat.</p>
+    </section>
+
+    <section id="sense" class="targeta avis" hidden>
+      <h2>No hi arriba</h2>
+      <p id="sense-text"></p>
+    </section>
+  </main>
+
+  <dialog id="dlg-alt" class="dialeg">
+    <div class="dlg-cap"><h2 id="alt-titol"></h2><button class="discret" data-tanca>✕</button></div>
+    <ul id="alt-llista" class="alternatives"></ul>
+  </dialog>
+
+  <dialog id="dlg-bot" class="dialeg">
+    <div class="dlg-cap"><h2 id="bot-titol"></h2><button class="discret" data-tanca>✕</button></div>
+    <ul id="bot-llista" class="botigues"></ul>
+    <p class="suau petit">Amazon, PcComponentes i Coolmod no deixen llegir els preus automàticament: s'obre la cerca a la botiga.</p>
+  </dialog>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="i18n.js"></script>
+  <script src="traduccions.js"></script>
+  <script src="cataleg.js"></script>
+  <script src="preus.js"></script>
+  <script src="motor.js"></script>
+  <script src="botigues.js"></script>
+  <script src="capacitor.js" onerror="void 0"></script>
+  <script src="app.js"></script>
+</body>
+</html>

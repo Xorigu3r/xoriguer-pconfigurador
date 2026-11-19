@@ -1,0 +1,6 @@
+node_modules/
+dist/
+android/app/build/
+*.apk
+CLAUDE.md
+www/capacitor.js
