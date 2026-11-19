@@ -107,6 +107,31 @@
     <p class="suau petit">Amazon, PcComponentes i Coolmod no deixen llegir els preus automàticament: s'obre la cerca a la botiga.</p>
   </dialog>
 
+  <dialog id="dlg-fitxa" class="dialeg">
+    <div class="dlg-cap"><h2 id="fx-tipus"></h2><button class="discret" data-tanca>✕</button></div>
+    <div class="fitxa">
+      <div class="fx-dalt">
+        <button id="fx-foto" class="fx-foto" aria-label="Amplia la foto"><img alt=""><span class="fx-lupa">🔍</span></button>
+        <div class="fx-info">
+          <h3 id="fx-nom"></h3>
+          <p id="fx-model" class="petit suau"></p>
+          <b id="fx-preu" class="fx-preu"></b>
+          <small id="fx-estoc"></small>
+          <div id="fx-botons" class="accions"></div>
+        </div>
+      </div>
+      <h3 class="fx-sub">Característiques</h3>
+      <table id="fx-taula" class="fx-taula"></table>
+      <p class="petit suau">Les característiques són les del model; la foto és la de la botiga i pot ser d'una versió o d'un fabricant diferent.</p>
+    </div>
+  </dialog>
+
+  <dialog id="dlg-foto" class="visor">
+    <button class="visor-tanca" data-tanca aria-label="Tanca">✕</button>
+    <div class="visor-marc"><img id="visor-img" alt=""></div>
+    <div class="visor-peu"><b id="visor-nom" data-no-t></b><p>Toca la foto per fer zoom</p></div>
+  </dialog>
+
   <dialog id="dlg-opc" class="dialeg">
     <div class="dlg-cap"><h2>Opcions</h2><button class="discret" data-tanca>✕</button></div>
     <div class="opc">

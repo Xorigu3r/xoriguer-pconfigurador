@@ -48,7 +48,7 @@ const preus = Object.assign({}, anteriors);
 for (const [id, r] of Object.entries(res)) {
   // Cercat bé a totes les botigues i no hi és: es marca com a no disponible (el motor no el farà servir).
   if (r.preu == null && !r.errors.length) preus[id] = { preu: null, stock: false, data: r.data, ofertes: [] };
-  if (r.preu != null) preus[id] = { preu: r.preu, url: r.url, botiga: r.botiga, stock: r.stock, data: r.data, ofertes: r.ofertes.map(o => ({ botiga: o.botiga, preu: o.preu, url: o.url, stock: o.stock, nom: o.nom.slice(0, 120) })) };
+  if (r.preu != null) preus[id] = { preu: r.preu, url: r.url, botiga: r.botiga, stock: r.stock, img: r.img, data: r.data, ofertes: r.ofertes.map(o => ({ botiga: o.botiga, preu: o.preu, url: o.url, stock: o.stock, img: o.img, nom: o.nom.slice(0, 120) })) };
 }
 const data = new Date().toISOString();
 writeFileSync(fitxer, '// Generat per scripts/actualitza-preus.mjs: no editar a mà.\nwindow.PREUS = ' + JSON.stringify({ data, preus }, null, 0) + ';\n');

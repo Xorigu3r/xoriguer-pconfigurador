@@ -18,7 +18,7 @@
   $('#idioma').addEventListener('change', e => { desa('idioma', e.target.value); location.reload(); });
   I18N.tradueix(document.body);
   document.title = 'Xoriguer PConfigurador';
-  const VERSIO = '1.2.1'; // igual que package.json
+  const VERSIO = '1.3.0'; // igual que package.json
 
   // ---------- Plataforma i lectura de pàgines ----------
   const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36';
@@ -90,7 +90,7 @@
         progres: (n, t) => { barra.firstElementChild.style.width = (100 * n / t) + '%'; pintaEstatPreus(T_('Buscant preus… {n}/{t}', { n, t })); },
       });
       for (const [id, r] of Object.entries(res)) {
-        if (r.preu != null) directe[id] = { preu: r.preu, url: r.url, botiga: r.botiga, stock: r.stock, data: r.data, ofertes: r.ofertes.map(o => ({ botiga: o.botiga, preu: o.preu, url: o.url, stock: o.stock, nom: o.nom.slice(0, 120) })) };
+        if (r.preu != null) directe[id] = { preu: r.preu, url: r.url, botiga: r.botiga, stock: r.stock, img: r.img, data: r.data, ofertes: r.ofertes.map(o => ({ botiga: o.botiga, preu: o.preu, url: o.url, stock: o.stock, img: o.img, nom: o.nom.slice(0, 120) })) };
         else if (!r.errors.length) directe[id] = { preu: null, stock: false, data: r.data, ofertes: [] };
         else fallades++;
       }
@@ -282,6 +282,38 @@
     }
     return '';
   }
+  // Fitxa: [etiqueta, valor] de cada característica del catàleg
+  const siNo = v => v ? T_('Sí') : T_('No');
+  const ENC = { nvenc: 'NVIDIA NVENC', amf: 'AMD AMF', qsv: 'Intel Quick Sync' };
+  function caracteristiques(s, p) {
+    const mida = gb => gb >= 1000 ? gb / 1000 + ' TB' : gb + ' GB';
+    switch (s) {
+      case 'cpu': return [[T_('Sòcol'), p.socket], [T_('Nuclis / fils'), `${p.nuc} / ${p.fil}`], [T_('Consum (TDP)'), p.tdp + ' W'],
+        [T_('Consum màxim'), p.pmax + ' W'], [T_('Memòria compatible'), p.mem.join(', ')], [T_('Gràfics integrats'), siNo(p.igpu)], [T_('Dissipador inclòs'), siNo(p.dissi)]];
+      case 'mb': return [[T_('Sòcol'), p.socket], [T_('Xipset'), p.chip], [T_('Format'), p.form], [T_('Memòria'), p.mem],
+        [T_('Ranures de RAM'), p.slots], [T_('Ranures M.2'), p.m2], ['Wi-Fi', siNo(p.wifi)], [T_('Processador fins a'), p.maxTdp + ' W']];
+      case 'ram': return [[T_('Tipus'), p.tipus], [T_('Capacitat'), p.gb + ' GB'], [T_('Mòduls'), `${p.mod} × ${p.gb / p.mod} GB`], [T_('Velocitat'), p.mhz + ' MHz']];
+      case 'gpu': return [[T_('Memòria de vídeo'), p.vram + ' GB'], [T_('Consum'), p.tdp + ' W'], [T_('Font recomanada'), p.fa + ' W'],
+        [T_('Llargada (versions més llargues)'), p.len + ' mm'], [T_('Codificador de vídeo'), ENC[p.enc] || p.enc]];
+      case 'ssd': return [[T_('Capacitat'), mida(p.gb)], [T_('Connexió'), `NVMe PCIe ${p.gen}.0`], [T_('Format'), 'M.2 2280']];
+      case 'psu': return [[T_('Potència'), p.w + ' W'], [T_('Eficiència'), '80+ ' + p.cert], ['ATX 3 / 12V-2x6', siNo(p.pcie5)]];
+      case 'case': return [[T_('Plaques'), p.forms.join(', ')], [T_('Gràfica fins a'), p.gpuMax + ' mm'], [T_('Dissipador fins a'), p.cooler + ' mm'],
+        [T_('Radiador fins a'), p.rad ? p.rad + ' mm' : T_('No n\'admet')]];
+      case 'cooler': return p.tipus === 'liquida'
+        ? [[T_('Tipus'), T_('Refrigeració líquida')], [T_('Radiador'), p.rad + ' mm'], [T_('Dissipa fins a'), p.tdpMax + ' W']]
+        : [[T_('Tipus'), T_('Per aire (torre)')], [T_('Alçada'), p.alt + ' mm'], [T_('Dissipa fins a'), p.tdpMax + ' W']];
+    }
+    return [];
+  }
+  const fotoDe = o => (o && (o.img || (o.ofertes || []).map(x => x.img).find(Boolean))) || null;
+  function miniatura(s, o, classe) {
+    const f = fotoDe(o);
+    if (!f) { const sp = document.createElement('span'); sp.className = classe + ' sense'; sp.textContent = ICO[s]; return sp; }
+    const im = document.createElement('img'); im.className = classe; im.loading = 'lazy'; im.alt = ''; im.src = f;
+    im.addEventListener('error', () => { const sp = document.createElement('span'); sp.className = classe + ' sense'; sp.textContent = ICO[s]; im.replaceWith(sp); });
+    return im;
+  }
+
   const modelTrobat = o => o && o.ofertes && o.ofertes[0] ? o.ofertes[0].nom.split(/,| - | – /)[0].slice(0, 90) : '';
   const NOM_BOTIGA = { alternate: 'Alternate', ldlc: 'LDLC' };
 
@@ -360,12 +392,22 @@
         if (o && o.preu != null) estoc = `<span class="estoc${o.stock ? '' : ' no'}"></span>${o.stock ? T_('En estoc') : T_('Sense estoc')} · ${NOM_BOTIGA[o.botiga] || ''}`;
         else estoc = `<span class="estoc ref"></span>${T_('Preu de referència')}`;
       }
-      li.innerHTML = `<span class="ico">${ICO[s]}</span>
+      li.innerHTML = `<span class="ico"></span>
         <div><div class="tipus"></div><div class="nom"></div>${model && model.toLowerCase() !== nom.toLowerCase() ? '<div class="model"></div>' : ''}<div class="spec"></div></div>
         <div class="preu"><b>${p ? euros(M.preuDe(p, P)) : '—'}</b><small>${estoc}</small></div>
         <div class="botons"></div>`;
       li.querySelector('.tipus').textContent = T_(NOM_SLOT[s]);
       li.querySelector('.nom').textContent = nom;
+      const ico = li.querySelector('.ico');
+      if (p) {
+        const fb = document.createElement('button'); fb.className = 'ico foto'; fb.title = T_('Fitxa'); fb.setAttribute('aria-label', T_('Fitxa'));
+        fb.append(miniatura(s, o, 'mini'));
+        fb.addEventListener('click', () => mostraFitxa(s, p, o));
+        ico.replaceWith(fb);
+        const n = li.querySelector('.nom'); n.classList.add('enllac'); n.tabIndex = 0; n.setAttribute('role', 'button');
+        n.addEventListener('click', () => mostraFitxa(s, p, o));
+        n.addEventListener('keydown', e => { if (e.key === 'Enter') mostraFitxa(s, p, o); });
+      } else ico.textContent = ICO[s];
       if (li.querySelector('.model')) li.querySelector('.model').textContent = model;
       li.querySelector('.spec').textContent = especificacions(s, p);
       const bt = li.querySelector('.botons');
@@ -378,6 +420,8 @@
         bt.append(a);
         const mes = document.createElement('button'); mes.textContent = T_('Altres botigues');
         mes.addEventListener('click', () => mostraBotigues(s, p, o)); bt.append(mes);
+        const fx = document.createElement('button'); fx.textContent = 'ℹ️ ' + T_('Fitxa');
+        fx.addEventListener('click', () => mostraFitxa(s, p, o)); bt.append(fx);
       }
       const canvi = document.createElement('button'); canvi.className = 'discret'; canvi.textContent = '⇄ ' + T_('Canvia');
       canvi.addEventListener('click', () => mostraAlternatives(s)); bt.append(canvi);
@@ -394,6 +438,60 @@
   // ---------- Diàlegs ----------
   $$('dialog [data-tanca]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
   $$('dialog').forEach(d => d.addEventListener('click', e => { if (e.target === d) d.close(); }));
+
+  // ---------- Fitxa de l'article i visor de fotos ----------
+  function mostraFitxa(s, p, o) {
+    const P = preus();
+    $('#fx-tipus').textContent = T_(NOM_SLOT[s]);
+    $('#fx-nom').textContent = p.nom;
+    const model = o && o.ofertes && o.ofertes[0] ? o.ofertes[0].nom : '';
+    $('#fx-model').textContent = model;
+    $('#fx-model').hidden = !model;
+    $('#fx-preu').textContent = euros(M.preuDe(p, P));
+    $('#fx-estoc').innerHTML = o && o.preu != null
+      ? `<span class="estoc${o.stock ? '' : ' no'}"></span>${o.stock ? T_('En estoc') : T_('Sense estoc')} · ${NOM_BOTIGA[o.botiga] || ''}`
+      : `<span class="estoc ref"></span>${T_('Preu de referència')}`;
+    const f = fotoDe(o), boto = $('#fx-foto');
+    boto.hidden = false;
+    const marc = boto.querySelector('img');
+    boto.classList.toggle('sense', !f);
+    if (f) { marc.src = f; marc.hidden = false; boto.dataset.ico = ''; } else { marc.removeAttribute('src'); marc.hidden = true; boto.dataset.ico = ICO[s]; }
+    boto.disabled = !f;
+    boto.onclick = () => f && mostraFoto(f, p.nom);
+    const taula = $('#fx-taula'); taula.innerHTML = '';
+    for (const [k, v] of caracteristiques(s, p)) {
+      const tr = document.createElement('tr'); tr.innerHTML = '<th></th><td></td>';
+      tr.firstChild.textContent = k; tr.lastChild.textContent = v; taula.append(tr);
+    }
+    const bt = $('#fx-botons'); bt.innerHTML = '';
+    const enll = B.enllacos(p, o && o.preu != null ? o : null);
+    const dir = enll.find(e => e.directe);
+    const a = document.createElement('a'); a.className = 'boto'; a.href = dir ? dir.url : enll[0].url;
+    a.textContent = dir ? T_('Compra a {b}', { b: dir.botiga }) : T_('Busca-la');
+    a.addEventListener('click', e => { e.preventDefault(); obreEnllac(a.href); });
+    const mes = document.createElement('button'); mes.textContent = T_('Altres botigues');
+    mes.addEventListener('click', () => { $('#dlg-fitxa').close(); mostraBotigues(s, p, o); });
+    bt.append(a, mes);
+    $('#dlg-fitxa').showModal();
+    $('#dlg-fitxa').scrollTop = 0;
+  }
+
+  function mostraFoto(petita, nom) {
+    const img = $('#visor-img');
+    img.classList.remove('zoom');
+    img.src = petita;   // es veu de seguida; la gran la substitueix quan arriba
+    const gran = B.fotoGran(petita);
+    if (gran && gran !== petita) { const g = new Image(); g.onload = () => { if (img.src === petita || img.src.endsWith(petita)) img.src = gran; }; g.src = gran; }
+    $('#visor-nom').textContent = nom;
+    $('#dlg-foto').showModal();
+  }
+  $('#visor-img').addEventListener('click', e => {
+    const img = e.currentTarget, marc = img.parentElement;
+    const r = img.getBoundingClientRect();
+    const fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
+    img.classList.toggle('zoom');
+    if (img.classList.contains('zoom')) { marc.scrollLeft = fx * marc.scrollWidth - marc.clientWidth / 2; marc.scrollTop = fy * marc.scrollHeight - marc.clientHeight / 2; }
+  });
 
   function mostraBotigues(s, p, o) {
     $('#bot-titol').textContent = p.nom;
@@ -441,6 +539,7 @@
       const li = document.createElement('li');
       li.innerHTML = '<button><b></b><span class="dif"></span><small></small></button>';
       const b = li.querySelector('button');
+      b.classList.add('amb-foto'); b.prepend(miniatura(s, o.peca && P[o.peca.id], 'mini'));
       if (actual) b.classList.add('actual');
       if (mala) b.classList.add('mal');
       if (o.bloc) b.disabled = true;
@@ -485,6 +584,7 @@
       const li = document.createElement('li');
       li.innerHTML = '<button><b></b><span class="dif"></span><small></small></button>';
       const b = li.querySelector('button');
+      b.classList.add('amb-foto'); b.prepend(miniatura(s, a.peca && P[a.peca.id], 'mini'));
       if (actual) b.classList.add('actual');
       if (a.errors.length) b.classList.add('mal');
       b.querySelector('b').textContent = a.peca ? a.peca.nom : (s === 'gpu' ? T_('Gràfics integrats') : T_('Dissipador de sèrie'));

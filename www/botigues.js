@@ -50,8 +50,9 @@
       const sub = (t.match(/class="product-name-sub">([\s\S]*?)<\/span>/) || [])[1] || '';
       const preu = (t.match(/class="price\s*">([^<]+)/) || [])[1];
       const entrega = text((t.match(/delivery-info[^>]*>([\s\S]*?)<\/div>/) || [])[1] || '');
+      const img = (t.match(/<img src="([^"]+)"[^>]*class="productPicture/) || [])[1];
       if (!nom || !preu) continue;
-      out.push({ nom: text(nom) + (sub ? ' ' + text(sub) : ''), preu: numero(preu), url: absolut(url, href), stock: !/no puede ser comprado|agotado|sin stock|no disponible/i.test(entrega), botiga: 'alternate' });
+      out.push({ nom: text(nom) + (sub ? ' ' + text(sub) : ''), preu: numero(preu), url: absolut(url, href), stock: !/no puede ser comprado|agotado|sin stock|no disponible/i.test(entrega), botiga: 'alternate', img: img ? absolut(url, desentitats(img)) : null });
     }
     return out;
   }
@@ -64,7 +65,8 @@
       const preu = (html.match(/id="productPriceStock"[\s\S]{0,400}?data-price="([\d.]+)"/) || [])[1];
       const sub = (html.match(/class="product-subtitle">\s*<h2>([\s\S]*?)<\/h2>/) || [])[1] || '';
       const stock = /class="[^"]*stock-[12]\b|En stock/i.test(html.slice(html.indexOf('productPriceStock'), html.indexOf('productPriceStock') + 6000));
-      if (preu) out.push({ nom: text(fitxa[1]) + ' ' + text(sub), preu: +preu, url, stock, botiga: 'ldlc' });
+      const img = (html.match(/<meta property="og:image" content="([^"]+)"/) || [])[1];
+      if (preu) out.push({ nom: text(fitxa[1]) + ' ' + text(sub), preu: +preu, url, stock, botiga: 'ldlc', img: img ? desentitats(img) : null });
       return out;
     }
     const trossos = html.split('class="pdt-item"').slice(1);
@@ -74,8 +76,9 @@
       const desc = (t.match(/<p class="desc">([\s\S]*?)<\/p>/) || [])[1] || '';
       const preu = (t.match(/<div class="price"><div class="price">([\s\S]*?)<\/div><\/div>/) || [])[1];
       const st = (t.match(/class="[^"]*\bstock stock-(\d+)/) || [])[1];
+      const img = (t.match(/<img src="(https:\/\/media\.ldlc\.com\/[^"]+)"/) || [])[1];
       if (!preu) continue;
-      out.push({ nom: text(a[2]) + ' ' + text(desc), preu: numero(text(preu.replace(/<sup>/, '€'))), url: absolut(url, a[1]), stock: st ? +st <= 2 : /en stock/i.test(t), botiga: 'ldlc' });
+      out.push({ nom: text(a[2]) + ' ' + text(desc), preu: numero(text(preu.replace(/<sup>/, '€'))), url: absolut(url, a[1]), stock: st ? +st <= 2 : /en stock/i.test(t), botiga: 'ldlc', img: img || null });
     }
     return out;
   }
@@ -121,7 +124,9 @@
     }));
     ofertes.sort((a, b) => (b.stock - a.stock) || a.preu - b.preu);
     const millor = ofertes[0];
+    const ambFoto = ofertes.find(o => o.img);
     return {
+      img: millor && millor.img ? millor.img : ambFoto ? ambFoto.img : null,
       preu: millor ? millor.preu : null,
       url: millor ? millor.url : null,
       botiga: millor ? millor.botiga : null,
@@ -150,6 +155,12 @@
     return res;
   }
 
+  // Foto gran a partir de la petita de la cerca (Alternate: 200 → 600 px; LDLC: r150 → r705).
+  function fotoGran(url) {
+    if (!url) return url;
+    return url.replace(/\/p\/\d+x\d+\//, '/p/600x600/').replace(/media\.ldlc\.com\/r\d+\//, 'media.ldlc.com/r705/');
+  }
+
   function llistaCataleg(cat) {
     const SL = ['cpu', 'mb', 'ram', 'gpu', 'ssd', 'psu', 'case', 'cooler'];
     return SL.flatMap(s => cat[s].map(p => [s, p]));
@@ -176,7 +187,7 @@
     try { return new TextDecoder(cs.toLowerCase()).decode(bytes); } catch { return new TextDecoder('utf-8').decode(bytes); }
   }
 
-  const API = { BOTIGUES, ENLLACOS, cercaPeca, cercaTot, llistaCataleg, enllacos, coincideix, llegeixAlternate, llegeixLdlc, numero, descodifica };
+  const API = { BOTIGUES, ENLLACOS, fotoGran, cercaPeca, cercaTot, llistaCataleg, enllacos, coincideix, llegeixAlternate, llegeixLdlc, numero, descodifica };
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
   else root.BOTIGUES = API;
 })(typeof window !== 'undefined' ? window : globalThis);
